@@ -42,11 +42,19 @@ jobs:
       - name: Archive (unsigned)
         run: |
           set -eo pipefail
-          WORKSPACE=$(ls ios/*.xcworkspace | head -1)
-          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
+          # .xcworkspace is a directory bundle — `-d` lists the path itself, not
+          # its contents (otherwise we'd grab contents.xcworkspacedata inside it).
+          WORKSPACE=$(ls -d ios/*.xcworkspace | head -1)
           echo "Workspace: $WORKSPACE"
-          echo "Scheme (guess): $SCHEME"
-          xcodebuild -list -workspace "$WORKSPACE" || true
+          xcodebuild -list -workspace "$WORKSPACE"
+          # Prefer the scheme named after the workspace; fall back to the first one.
+          BASE=$(basename "$WORKSPACE" .xcworkspace)
+          if xcodebuild -list -workspace "$WORKSPACE" -json | grep -q "\"$BASE\""; then
+            SCHEME="$BASE"
+          else
+            SCHEME=$(xcodebuild -list -workspace "$WORKSPACE" -json | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const j=JSON.parse(d);console.log((j.workspace.schemes||[])[0]||'')})")
+          fi
+          echo "Scheme: $SCHEME"
           xcodebuild archive \
             -workspace "$WORKSPACE" \
             -scheme "$SCHEME" \
