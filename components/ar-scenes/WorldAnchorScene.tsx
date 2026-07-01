@@ -59,12 +59,17 @@ export default function WorldAnchorScene() {
   const [trk, setTrk] = useState(0);
   const [events, setEvents] = useState(0);
 
-  // Re-plants on every update while the QR is visible (drift reset). When the QR
-  // leaves view there are no more updates, so the pose freezes in the world frame
-  // and ARKit world-tracking carries it as you walk the room.
+  // Plant ONCE, then freeze. With numberOfTrackedImages=1 ARKit tracks the image
+  // continuously and fires onAnchorUpdated ~60x/s; re-planting on each of those
+  // slaved the cube to the jittery live image pose (it slid, then snapped back).
+  // Instead we snapshot the FIRST detection into the world frame and let ARKit
+  // world-tracking carry it as you walk. "Re-plantar" clears the pose so the next
+  // detection re-references (deliberate drift reset).
   const onAnchor = (anchor: { position: Vec3; rotation: Vec3 }) => {
     setEvents((n) => n + 1);
-    setPose(cubeWorldPose({ position: anchor.position, rotation: anchor.rotation }, CUBE_OFFSET_M));
+    setPose((prev) =>
+      prev ? prev : cubeWorldPose({ position: anchor.position, rotation: anchor.rotation }, CUBE_OFFSET_M),
+    );
   };
 
   return (
