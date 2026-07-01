@@ -6,7 +6,11 @@ import WorldAnchorScene from '@/components/ar-scenes/WorldAnchorScene';
 export default function ARHome() {
   return (
     <View style={styles.container}>
-      <ViroARSceneNavigator initialScene={{ scene: WorldAnchorScene }} style={styles.nav} />
+      <ViroARSceneNavigator
+        initialScene={{ scene: WorldAnchorScene }}
+        numberOfTrackedImages={1}
+        style={styles.nav}
+      />
     </View>
   );
 }
