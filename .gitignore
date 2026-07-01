@@ -39,3 +39,9 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+# build artifacts (unsigned IPA fetched from CI)
+_ipa/
+
+# this repo uses yarn — reject stray npm lockfiles
+package-lock.json
