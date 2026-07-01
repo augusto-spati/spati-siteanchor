@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import {
   ViroARScene,
@@ -62,7 +62,9 @@ function trackHint(state: number, reason: number): string | null {
 export default function WorldAnchorScene(props: { sceneNavigator?: any } = {}) {
   // Phase E1: model URL supplied at launch via the navigator's viroAppProps.
   const modelUri: string | undefined = props.sceneNavigator?.viroAppProps?.modelUri;
-  const modelSource = resolveModelSource(modelUri, BUNDLED_MODEL);
+  // Memoize: a remote {uri} object recreated every render makes Viro re-download
+  // the model on each re-render (opacity toggle, nudge). Stable identity = no reload.
+  const modelSource = useMemo(() => resolveModelSource(modelUri, BUNDLED_MODEL), [modelUri]);
   const [pose, setPose] = useState<Pose | null>(null);
   const [hint, setHint] = useState<string | null>('Aponte a câmera para o QR');
   // Diagnostics — surfaced on-screen so we can see which layer breaks:
@@ -76,17 +78,22 @@ export default function WorldAnchorScene(props: { sceneNavigator?: any } = {}) {
   // Phase D fine-tune: accumulate small world-frame nudges onto the planted pose.
   const nudge = (n: PoseNudge) => setPose((p) => (p ? nudgePose(p, n) : p));
 
-  // Plant ONCE, then freeze. With numberOfTrackedImages=1 ARKit tracks the image
-  // continuously and fires onAnchorUpdated ~60x/s; re-planting on each of those
-  // slaved the cube to the jittery live image pose (it slid, then snapped back).
-  // Instead we snapshot the FIRST detection into the world frame and let ARKit
-  // world-tracking carry it as you walk. "Re-plantar" clears the pose so the next
-  // detection re-references (deliberate drift reset).
+  // Plant ONCE, then go fully inert. With numberOfTrackedImages=1 ARKit fires
+  // onAnchorUpdated ~60x/s; a ref guard drops every post-plant update WITHOUT any
+  // setState, so there is zero re-render churn (the old setEvents(n+1) per update
+  // re-rendered 60x/s → reloaded a remote model + cost FPS). We snapshot the FIRST
+  // detection into the world frame and let ARKit world-tracking carry it as you
+  // walk. "Re-plantar" re-arms the guard so the next detection re-references.
+  const plantedRef = useRef(false);
+  const replant = () => {
+    plantedRef.current = false;
+    setPose(null);
+  };
   const onAnchor = (anchor: { position: Vec3; rotation: Vec3 }) => {
+    if (plantedRef.current) return;
+    plantedRef.current = true;
     setEvents((n) => n + 1);
-    setPose((prev) =>
-      prev ? prev : cubeWorldPose({ position: anchor.position, rotation: anchor.rotation }, CUBE_OFFSET_M),
-    );
+    setPose(cubeWorldPose({ position: anchor.position, rotation: anchor.rotation }, CUBE_OFFSET_M));
   };
 
   return (
@@ -142,7 +149,7 @@ export default function WorldAnchorScene(props: { sceneNavigator?: any } = {}) {
             position={[-0.55, -0.4, -1.5]}
             scale={[0.4, 0.4, 0.4]}
             style={styles.button}
-            onClick={() => setPose(null)}
+            onClick={replant}
           />
           <ViroText
             text={xray ? 'Raio-X: on' : 'Raio-X: off'}
