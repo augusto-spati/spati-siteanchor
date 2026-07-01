@@ -14,8 +14,12 @@ import {
   ViroARTrackingReasonConstants,
 } from '@reactvision/react-viro';
 import { cubeWorldPose, nudgePose, type PoseNudge } from '../../src/spati-anchor/worldAnchor';
+import { resolveModelSource } from '../../src/spati-anchor/modelSource';
 import { CUBE_OFFSET_M, QR_PHYSICAL_WIDTH_M } from '../../src/spati-anchor/fixtures';
 import type { Vec3 } from '../../src/spati-anchor/mat4';
+
+// Bundled demo model (Phase B). A runtime modelUri overrides it (Phase E1).
+const BUNDLED_MODEL = require('../../assets/models/robot.glb');
 
 // Phase D fine-tune step sizes (world frame).
 const TRANSLATE_STEP_M = 0.01; // 1 cm per tap
@@ -55,7 +59,10 @@ function trackHint(state: number, reason: number): string | null {
   return 'Inicializando o rastreamento…';
 }
 
-export default function WorldAnchorScene() {
+export default function WorldAnchorScene(props: { sceneNavigator?: any } = {}) {
+  // Phase E1: model URL supplied at launch via the navigator's viroAppProps.
+  const modelUri: string | undefined = props.sceneNavigator?.viroAppProps?.modelUri;
+  const modelSource = resolveModelSource(modelUri, BUNDLED_MODEL);
   const [pose, setPose] = useState<Pose | null>(null);
   const [hint, setHint] = useState<string | null>('Aponte a câmera para o QR');
   // Diagnostics — surfaced on-screen so we can see which layer breaks:
@@ -113,7 +120,7 @@ export default function WorldAnchorScene() {
               loading and that a model rides the SAME world pose — both objects must
               stay put together as you walk the room. */}
           <Viro3DObject
-            source={require('../../assets/models/robot.glb')}
+            source={modelSource}
             position={[0.3, 0, 0]}
             scale={[0.2, 0.2, 0.2]}
             rotation={[0, 180, 0]}
