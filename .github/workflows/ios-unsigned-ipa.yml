@@ -1,0 +1,78 @@
+name: iOS unsigned IPA (Sideloadly)
+
+# Builds an UNSIGNED .ipa on a free macOS runner (public repo = free minutes).
+# You then re-sign it with Sideloadly + a free Apple ID on Windows — no paid
+# Apple Developer account, no Mac. Trigger manually from the Actions tab or via
+# `gh workflow run`.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select latest stable Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install JS deps
+        run: |
+          corepack enable
+          corepack prepare yarn@1.22.22 --activate
+          yarn install --frozen-lockfile
+
+      - name: Expo prebuild (iOS native project)
+        run: npx expo prebuild --platform ios --no-install
+
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          pod install --repo-update
+
+      - name: Archive (unsigned)
+        run: |
+          set -eo pipefail
+          WORKSPACE=$(ls ios/*.xcworkspace | head -1)
+          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
+          echo "Workspace: $WORKSPACE"
+          echo "Scheme (guess): $SCHEME"
+          xcodebuild -list -workspace "$WORKSPACE" || true
+          xcodebuild archive \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$PWD/build/App.xcarchive" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM=""
+
+      - name: Package unsigned IPA
+        run: |
+          set -eo pipefail
+          cd build
+          APP=$(ls App.xcarchive/Products/Applications/ | head -1)
+          echo "App bundle: $APP"
+          mkdir -p Payload
+          cp -R "App.xcarchive/Products/Applications/$APP" Payload/
+          zip -qry SpatiSiteAnchor-unsigned.ipa Payload
+          ls -la SpatiSiteAnchor-unsigned.ipa
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SpatiSiteAnchor-unsigned-ipa
+          path: build/SpatiSiteAnchor-unsigned.ipa
+          if-no-files-found: error
