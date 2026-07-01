@@ -89,3 +89,24 @@ The opening screen is an AR menu — tap an entry:
 2. Port `@spati/geo` + `@spati/coordinates-contract` (pure TS) for georeference.
 3. `ViroARImageMarker` (QR) → compute SLAM→survey transform → anchor.
 4. Load a real project `.glb`; deviation heatmap; issues/API.
+
+## QR world-anchor validation (walk-the-room test)
+
+The `WorldAnchorScene` is the current entry screen. It proves the native pivot:
+the QR is a **one-time bootstrap**, then the overlay lives in the ARKit **world**
+frame so you can walk the whole room away from the QR and it stays put.
+
+1. On the PC, open `assets/markers/qr.png` and display it large. **Measure the
+   on-screen QR width with a ruler.** If it is not ~15 cm, set the measured value
+   (in meters) in `src/spati-anchor/fixtures.ts` → `QR_PHYSICAL_WIDTH_M` and
+   rebuild.
+2. Launch **Spati SiteAnchor** on the iPhone 14 Pro. Point at the QR.
+3. A blue cube with XYZ axes appears near the QR ("Ancorado" shows).
+4. **Put the phone down-ish and walk around the whole room.** The cube must stay
+   put in the world — it does NOT need the QR in view.
+5. Return and re-sight the QR → it re-plants (drift reset). "Re-plantar" clears it
+   so you can repeat.
+6. Tracking hints ("Mova mais devagar" / "Aponte para uma área com mais detalhe")
+   show when ARKit tracking degrades.
+
+Offline math tests: `yarn test` (vitest, no device needed).
