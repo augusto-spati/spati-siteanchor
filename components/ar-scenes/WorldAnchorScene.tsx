@@ -6,6 +6,7 @@ import {
   ViroARTrackingTargets,
   ViroNode,
   ViroBox,
+  Viro3DObject,
   ViroText,
   ViroAmbientLight,
   ViroMaterials,
@@ -94,10 +95,21 @@ export default function WorldAnchorScene() {
 
       {pose && (
         <ViroNode position={pose.position} rotation={pose.rotation}>
+          {/* Anchor marker + coordinate frame at the QR. */}
           <ViroBox scale={[0.12, 0.12, 0.12]} materials={['cube']} />
           <ViroBox position={[0.1, 0, 0]} scale={[0.2, 0.01, 0.01]} materials={['axisX']} />
           <ViroBox position={[0, 0.1, 0]} scale={[0.01, 0.2, 0.01]} materials={['axisY']} />
           <ViroBox position={[0, 0, 0.1]} scale={[0.01, 0.01, 0.2]} materials={['axisZ']} />
+          {/* Phase B: a real .glb, offset 30cm along +X of the anchor. Proves glTF
+              loading and that a model rides the SAME world pose — both objects must
+              stay put together as you walk the room. */}
+          <Viro3DObject
+            source={require('../../assets/models/robot.glb')}
+            position={[0.3, 0, 0]}
+            scale={[0.2, 0.2, 0.2]}
+            rotation={[0, 180, 0]}
+            type="GLB"
+          />
         </ViroNode>
       )}
 
