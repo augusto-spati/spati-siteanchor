@@ -7,12 +7,20 @@
     "icon": "./assets/images/icon.png",
     "scheme": "spatisiteanchor",
     "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.spati.siteanchor",
       "infoPlist": {
         "NSCameraUsageDescription": "O Spati SiteAnchor usa a câmera para sobrepor o modelo BIM à realidade em AR.",
-        "NSLocationWhenInUseUsageDescription": "O Spati SiteAnchor usa sua localização para georreferenciar o modelo no canteiro."
+        "NSLocationWhenInUseUsageDescription": "O Spati SiteAnchor usa sua localização para georreferenciar o modelo no canteiro.",
+        "NSPhotoLibraryUsageDescription": "O Spati SiteAnchor pode ler fotos para o AR.",
+        "NSPhotoLibraryAddUsageDescription": "Allow $(PRODUCT_NAME) to save photos",
+        "NSMicrophoneUsageDescription": "O Spati SiteAnchor usa o microfone para AR.",
+        "GARAPIKey": "Your Google Cloud API Key",
+        "RVApiKey": "Add your API key here",
+        "RVProjectId": "Add your project ID here",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Allow $(PRODUCT_NAME) to use your location for AR experiences"
       }
     },
     "android": {
@@ -68,6 +76,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "46001ce7-fb2e-4fc8-9970-7a7af16c336e"
+      }
     }
   }
 }
