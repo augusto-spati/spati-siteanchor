@@ -40,3 +40,27 @@ export function modelWorldPose(
   const tWorldModel = worldFromDetection(tWorldMarker, qrPoseInModel, identityMat4());
   return posEulerFromMat4(tWorldModel);
 }
+
+export interface PoseNudge {
+  dx?: number;
+  dy?: number;
+  dz?: number;
+  dYawDeg?: number;
+}
+
+/**
+ * Fine-tune a planted pose by small world-frame deltas (Phase D). Translations
+ * add to position (metres); dYawDeg adds to the Y Euler angle (yaw, degrees).
+ * Nudges accumulate (apply repeatedly to the running pose). Pure — returns a new
+ * pose and never mutates the input.
+ */
+export function nudgePose(
+  pose: { position: Vec3; rotation: Vec3 },
+  n: PoseNudge,
+): { position: Vec3; rotation: Vec3 } {
+  const { dx = 0, dy = 0, dz = 0, dYawDeg = 0 } = n;
+  return {
+    position: [pose.position[0] + dx, pose.position[1] + dy, pose.position[2] + dz],
+    rotation: [pose.rotation[0], pose.rotation[1] + dYawDeg, pose.rotation[2]],
+  };
+}

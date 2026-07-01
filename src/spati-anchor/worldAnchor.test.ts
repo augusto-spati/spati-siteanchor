@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { worldFromDetection, cubeWorldPose, modelWorldPose } from './worldAnchor';
+import { worldFromDetection, cubeWorldPose, modelWorldPose, nudgePose } from './worldAnchor';
 import { identityMat4, translationMat4, type Vec3 } from './mat4';
 import { mat4FromPosEuler } from './viroBridge';
 
@@ -43,5 +43,31 @@ describe('modelWorldPose (Phase A — full model placement)', () => {
     expect(r.position[0]).toBeCloseTo(0, 9);
     expect(r.position[1]).toBeCloseTo(0, 9);
     expect(r.position[2]).toBeCloseTo(-2, 9);
+  });
+});
+
+describe('nudgePose (Phase D — fine-tune)', () => {
+  const base = { position: [1, 1, 1] as Vec3, rotation: [0, 10, 0] as Vec3 };
+  it('translates without touching rotation, and does not mutate the input', () => {
+    const r = nudgePose(base, { dx: 0.01, dz: -0.02 });
+    expect(r.position[0]).toBeCloseTo(1.01, 9);
+    expect(r.position[1]).toBeCloseTo(1, 9);
+    expect(r.position[2]).toBeCloseTo(0.98, 9);
+    expect(r.rotation).toEqual([0, 10, 0]);
+    expect(base.position).toEqual([1, 1, 1]); // input untouched
+  });
+  it('adds yaw to the Y euler only', () => {
+    const r = nudgePose(base, { dYawDeg: 5 });
+    expect(r.rotation).toEqual([0, 15, 0]);
+    expect(r.position).toEqual([1, 1, 1]);
+  });
+  it('accumulates when applied repeatedly', () => {
+    const r = nudgePose(nudgePose(base, { dx: 0.01 }), { dx: 0.01 });
+    expect(r.position[0]).toBeCloseTo(1.02, 9);
+  });
+  it('defaults missing deltas to zero (new object, equal value)', () => {
+    const r = nudgePose(base, {});
+    expect(r).toEqual(base);
+    expect(r).not.toBe(base);
   });
 });
