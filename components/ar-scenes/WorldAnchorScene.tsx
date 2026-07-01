@@ -89,10 +89,10 @@ export default function WorldAnchorScene() {
 
       {pose && (
         <ViroNode position={pose.position} rotation={pose.rotation}>
-          <ViroBox scale={[0.3, 0.3, 0.3]} materials={['cube']} />
-          <ViroBox position={[0.25, 0, 0]} scale={[0.5, 0.02, 0.02]} materials={['axisX']} />
-          <ViroBox position={[0, 0.25, 0]} scale={[0.02, 0.5, 0.02]} materials={['axisY']} />
-          <ViroBox position={[0, 0, 0.25]} scale={[0.02, 0.02, 0.5]} materials={['axisZ']} />
+          <ViroBox scale={[0.12, 0.12, 0.12]} materials={['cube']} />
+          <ViroBox position={[0.1, 0, 0]} scale={[0.2, 0.01, 0.01]} materials={['axisX']} />
+          <ViroBox position={[0, 0.1, 0]} scale={[0.01, 0.2, 0.01]} materials={['axisY']} />
+          <ViroBox position={[0, 0, 0.1]} scale={[0.01, 0.01, 0.2]} materials={['axisZ']} />
         </ViroNode>
       )}
 
