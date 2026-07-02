@@ -74,6 +74,9 @@ export default function WorldAnchorScene(props: { sceneNavigator?: any } = {}) {
   const [events, setEvents] = useState(0);
   // Phase D: translucent "raio-X" mode to see the model over reality.
   const [xray, setXray] = useState(false);
+  // Diagnostics: surface the model's remote-load state (we can't see device logs).
+  //  — = not started · carregando · ok · ERRO
+  const [modelStatus, setModelStatus] = useState('—');
 
   // Phase D fine-tune: accumulate small world-frame nudges onto the planted pose.
   const nudge = (n: PoseNudge) => setPose((p) => (p ? nudgePose(p, n) : p));
@@ -107,7 +110,9 @@ export default function WorldAnchorScene(props: { sceneNavigator?: any } = {}) {
       <ViroAmbientLight color="#ffffff" intensity={250} />
 
       <ViroText
-        text={`dbg trk=${trk} ev=${events} tgt=${TARGETS_ERROR ? 'ERR' : 'ok'}`}
+        text={`trk=${trk} ev=${events} tgt=${TARGETS_ERROR ? 'ERR' : 'ok'} mdl=${modelStatus}${
+          pose ? ` p=${pose.position.map((n) => n.toFixed(1)).join(',')}` : ''
+        }`}
         position={[0, 0.6, -1.5]}
         scale={[0.3, 0.3, 0.3]}
         style={styles.debug}
@@ -133,6 +138,9 @@ export default function WorldAnchorScene(props: { sceneNavigator?: any } = {}) {
             rotation={[0, 180, 0]}
             opacity={xray ? 0.45 : 1}
             type="GLB"
+            onLoadStart={() => setModelStatus('carregando')}
+            onLoadEnd={() => setModelStatus('ok')}
+            onError={() => setModelStatus('ERRO')}
           />
         </ViroNode>
       )}
