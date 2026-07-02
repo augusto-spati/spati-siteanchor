@@ -121,16 +121,22 @@ export default function WorldAnchorScene(props: { sceneNavigator?: any } = {}) {
       {/* Trigger only — intentionally has no visible children. */}
       <ViroARImageMarker target="qr" onAnchorFound={onAnchor} onAnchorUpdated={onAnchor} />
 
+      {/* Anchor marker + coordinate frame — its OWN node so it ALWAYS renders once
+          planted. Viro hides a node while a child Viro3DObject is unloaded/failing,
+          so the model must NOT live here or a bad model takes the cube down with it. */}
       {pose && (
         <ViroNode position={pose.position} rotation={pose.rotation}>
-          {/* Anchor marker + coordinate frame at the QR. */}
           <ViroBox scale={[0.12, 0.12, 0.12]} materials={['cube']} />
           <ViroBox position={[0.1, 0, 0]} scale={[0.2, 0.01, 0.01]} materials={['axisX']} />
           <ViroBox position={[0, 0.1, 0]} scale={[0.01, 0.2, 0.01]} materials={['axisY']} />
           <ViroBox position={[0, 0, 0.1]} scale={[0.01, 0.01, 0.2]} materials={['axisZ']} />
-          {/* Phase B: a real .glb, offset 30cm along +X of the anchor. Proves glTF
-              loading and that a model rides the SAME world pose — both objects must
-              stay put together as you walk the room. */}
+        </ViroNode>
+      )}
+
+      {/* The model rides the SAME world pose but in a SEPARATE node, so a failed
+          load only blanks the model — never the anchor. Offset 30cm along +X. */}
+      {pose && (
+        <ViroNode position={pose.position} rotation={pose.rotation}>
           <Viro3DObject
             source={modelSource}
             position={[0.3, 0, 0]}
